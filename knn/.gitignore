@@ -1,0 +1,7 @@
+data/*.jsonl
+data/*.json
+data/*.npz
+!data/.gitkeep
+*.tmp
+__pycache__/
+*.pyc
