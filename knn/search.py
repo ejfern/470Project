@@ -10,15 +10,22 @@ def cosine_similarity(query_words, job_words):
     numerator = 0
 
     for word in query_words:
-        numerator += query_words[word] * job_words.get(word, 0)
+        numerator += query_words.get(word) * job_words.get(word, 0)
 
-    query_length = sum(count**2 for count in query_words.values()) ** 0.5
-    job_length = sum(count**2 for count in job_words.values()) ** 0.5
+    query_sum = 0
+    for word in query_words:
+        query_sum += query_words.get(word) ** 2
 
-    if query_length == 0 or job_length == 0:
+    job_sum = 0
+    for word in job_words:
+        job_sum += job_words.get(word) ** 2
+
+    denominator = (query_sum**0.5) * (job_sum**0.5)
+
+    if denominator == 0:
         return 0
 
-    return numerator / (query_length * job_length)
+    return numerator / denominator
 
 
 def search(query, jobs):
