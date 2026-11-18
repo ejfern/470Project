@@ -1,12 +1,13 @@
 import json
+from pathlib import Path
 
-INPUT_FILE = "knn/data/cleaned_jobs.jsonl"
+INPUT_FILE = Path(__file__).resolve().parent / "data" / "cleaned_jobs.jsonl"
 NUMBER_OF_JOBS = 1000
 
 
 def build_vectors():
     bow_vectors = []
-    with open(INPUT_FILE, "r", encoding="utf-8") as input_file:
+    with INPUT_FILE.open("r", encoding="utf-8") as input_file:
         for line in input_file:
             job = json.loads(line)
             word_counts = {}

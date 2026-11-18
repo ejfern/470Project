@@ -14,7 +14,12 @@ def counts_to_text(word_counts):
             words.append(word)
     return " ".join(words)
 
-def find_jobs(user_query, jobs):
+def find_jobs(user_query, jobs, selected_locations=None):
+    if selected_locations:
+        jobs = [job for job in jobs if job.get("location") in selected_locations]
+    if not jobs:
+        return []
+
     query = user_query.replace(",", " ").lower()
 
     job_texts = []
@@ -61,6 +66,77 @@ def main(page: ft.Page):
     # word_counts = bag of words in description
     jobs = build_vectors()
 
+    locations = set()
+    for job in jobs:
+        location = job.get("location")
+        if location:
+            locations.add(location.strip())
+    locations = sorted(locations)
+    selected_locations = set()
+
+    location_search = ft.TextField(label="Search locations", hint_text="Type to filter")
+    location_options = ft.Column(spacing=0)
+    location_picker = ft.Container(
+        content=ft.Column([
+            location_search,
+            ft.Row([
+                ft.TextButton("Select all", on_click=lambda e: select_all_locations()),
+                ft.TextButton("Clear", on_click=lambda e: clear_locations()),
+            ]),
+            location_options,
+        ], tight=True),
+        visible=False,
+        padding=10,
+    )
+    location_button = ft.OutlinedButton("Locations (all)", on_click=lambda e: toggle_location_picker())
+
+    def update_location_button():
+        location_button.text = (
+            f"Locations ({len(selected_locations)} selected)"
+            if selected_locations else "Locations (all)"
+        )
+
+    def show_location_options(e=None):
+        search_text = (location_search.value or "").strip().lower()
+        location_options.controls.clear()
+        for location in locations:
+            if search_text and search_text not in location.lower():
+                continue
+
+            def on_location_change(e, location=location):
+                if e.control.value:
+                    selected_locations.add(location)
+                else:
+                    selected_locations.discard(location)
+                update_location_button()
+                page.update()
+
+            location_options.controls.append(ft.Checkbox(
+                label=location,
+                value=location in selected_locations,
+                on_change=on_location_change,
+            ))
+        page.update()
+
+    location_search.on_change = show_location_options
+
+    def select_all_locations():
+        selected_locations.update(locations)
+        show_location_options()
+        update_location_button()
+
+    def clear_locations():
+        selected_locations.clear()
+        show_location_options()
+        update_location_button()
+
+    def toggle_location_picker():
+        location_picker.visible = not location_picker.visible
+        if location_picker.visible:
+            show_location_options()
+        else:
+            page.update()
+
     # search button functionality
     def search_jobs(e):
         # get user query (list of skills ex. "python, sql")
@@ -71,7 +147,7 @@ def main(page: ft.Page):
             return
 
         # run algorithm
-        results = find_jobs(user_query, jobs)
+        results = find_jobs(user_query, jobs, selected_locations)
 
         # clear old results
         results_list.controls.clear()
@@ -87,7 +163,7 @@ def main(page: ft.Page):
                         f"{job['title']} | {job.get('location')} | {job.get('jobUrl')} | Score: {float(score):.3f}"
                     )
                 )
-        page.update()
+        page.update()  
 
     page.add(
         ft.Column([
@@ -96,7 +172,7 @@ def main(page: ft.Page):
                     alignment = ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls = [
                         ft.Text(
-                            "NAME",
+                            "Skill-Based Job Search",
                             color = ft.Colors.BLACK,
                             size = 18,
                             weight = ft.FontWeight.BOLD,
@@ -125,7 +201,7 @@ def main(page: ft.Page):
             ft.Row([
                 query_input,
                 
-                ft.Divider(height = 20),
+                location_button,
 
                 ft.Button(
                     content = "Search Jobs",
@@ -136,6 +212,8 @@ def main(page: ft.Page):
                     )
                 )
             ]),
+
+            location_picker,
 
             ft.Divider(height = 20),
 
