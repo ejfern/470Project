@@ -1,10 +1,12 @@
 import html
 import json
 import re
+from pathlib import Path
 
 
-INPUT_FILE = "ashby-jobs-with-descriptions.json"
-OUTPUT_FILE = "knn/data/cleaned_jobs.jsonl"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+INPUT_FILE = PROJECT_ROOT / "ashby-jobs-with-descriptions.json"
+OUTPUT_FILE = Path(__file__).resolve().parent / "data" / "cleaned_jobs.jsonl"
 
 
 def clean_description(description):
